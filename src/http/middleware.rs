@@ -11,13 +11,14 @@ pub trait Middleware<State: Clone + Send + Sync + 'static> {
 }
 
 #[async_trait]
-impl<State, F> Middleware<State> for F
+impl<State, F, Fut> Middleware<State> for F
     where
         State: Clone + Send + Sync + 'static,
-        F: Send + Sync + 'static + Fn(Context<State>),
+        F: Send + Sync + 'static + Fn(Context<State>) -> Fut,
+        Fut: Future<Output = ()> + Send + 'static,
 {
     async fn handle(&self, ctx: Context<State>) {
         let fut = (self)(ctx);
-        fut.await;
+        fut.await
     }
 }
